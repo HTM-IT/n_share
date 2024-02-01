@@ -1,0 +1,16 @@
+[RoutineDef,ToggleSubtoolVisibility,
+	[if, 0 == [IGet,Transform:Edit]
+	,
+		[NoteBar, "can't change visibitlity cos edit mode is off"]
+	,
+    	[VarSet,currentSubtool,[IGetTitle, Tool:Current Tool]]
+    	[VarSet,currentSubtoolPath,[StrMerge,"Tool:Sub Tool:",#currentSubtool]]
+    	[IModSet,currentSubToolPath,[IModGet,currentSubToolPath]+32]
+    ]
+]
+
+[IButton,???,"ToggleVisibility",
+    [IShowActions,0]
+    [IConfig,2020]
+    [RoutineCall,ToggleSubtoolVisibility]
+,,1/2,,,]

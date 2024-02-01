@@ -1,0 +1,34 @@
+﻿/* 
+	Toggles Dynamic Brush Size On and Off for the selected Brush.
+	2017 Joseph Drust - www.JosephDrust.com
+	Feel free to use this code in other Macros or ZScripts!
+	Thanks to Marcus Burgess for the continuing ZScripting help over the years :)
+*/
+
+/////////////////////////////////////////
+// User Changable Options ///////////////
+/////////////////////////////////////////
+
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+
+[RoutineDef,DynamicBrushToggle,
+	
+	[If,[IModGet,Draw:Draw Size],
+		[IModSet,Draw:Draw Size,0]
+	,
+		[IModSet,Draw:Draw Size,1]
+	]
+		
+]//Routine DynamicBrushToggle
+
+
+[IButton,???,"Toggles Dynamic Brush Size On and Off for the selected Brush.",
+	[IShowActions,0]
+	[IConfig,4.8]
+
+	//[IFreeze,
+		[RoutineCall,DynamicBrushToggle]
+	//]
+,,1,,,]

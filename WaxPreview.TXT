@@ -1,0 +1,5 @@
+//change wax preview value and related render properties
+[IButton,???,"change wax preview value and related render properties",
+	[IPress,Render:Render Properties:WaxPreview]
+	[ISet,Material:Wax Modifiers:Strength,50]
+]
