@@ -1,0 +1,71 @@
+
+
+[IButton, "show current subtool name",,
+    [VarSet, curSubToolName, [IGetTitle, Tool:Current Tool]]
+    [VarSet, curSubToolPath, [StrMerge,"Tool:Sub Tool:",curSubToolName]]
+
+    [If, 2==[IModGet, curSubToolPath],
+        [Note, "Not Visible"]
+    ,
+        [Note, "Visible"]
+    ]
+]
+
+
+[VarDef, layerCount, 0]
+[IButton, "Select Bottom Layer",,
+    // Select Bottom Layer
+    [If, [IsEnabled, Tool:Layers:Layers Scrollbar],
+        [ISet,Tool:Layers:Layers Scrollbar,0,256] // set scroll bar to bottom of layer UI
+        [VarSet, layerCount, [IGetSecondary, Tool:Layers:Layers Scrollbar]]
+
+        [VarInc, layerCount]
+        [Note, layerCount]
+        [IFreeze,
+            [Loop, [Val, layerCount],
+                [If, [IsEnabled, Tool:Layers:SelectDown],
+                    // get layer name
+                    [VarSet, currentLayerName, [IGetTitle,"Tool:Layers:Layer Intensity"]]
+
+                    // check if recording is ON
+                    [If, 0 != [IModGet, [StrMerge, Tool:Layers:, currentLayerName]],
+                        [IModSet, [StrMerge, Tool:Layers:, currentLayerName], 0]
+                    ]
+
+                    [Note,  [IModGet, [StrMerge, Tool:Layers:, currentLayerName]]]
+                    // select layer below
+                    [IPress, Tool:Layers:SelectDown]
+                ,
+                    [LoopExit]
+                ]
+            ]
+        ] // end freeze
+    ,
+        [Note, "There's no layer existing."]
+    ]
+
+    // find TransPose layer
+]
+
+
+[VarSet, currentLayerName, [IGetTitle,"Tool:Layers:Layer Intensity"]]
+[IButton,Hogehoge,,
+    [Note,[IModGet, [StrMerge, Tool:Layers:, currentLayerName]]]
+    //[Note, currentLayerName]
+    //[IModSet, [StrMerge, Tool:Layers:, currentLayerName], 0]
+    //[VarSet, layerPath, [StrMerge, Tool:Layers:, currentLayerName]]
+    //[Note, [IModGet,layerPath]]
+    //[VarSet, tmpIntensity, [IGet,Tool:Layers:Layer Intensity]]
+    //[ISet,Tool:Layers:Layer Intensity, tmpIntensity]
+]
+
+
+[RoutineDef, HiLayerUtil,
+    [ISubPalette,"Zplugin:HI Layer Util",1]
+    [IButton, "Zplugin:HI Layer Util:Rec ON",,[Note, "hogehoge"]]
+    [IButton, "Zplugin:HI Layer Util:Rec OFF",,[Note, "hogehoge"]]
+    [IButton, "Zplugin:HI Layer Util:Visible ON",,[Note, "hogehoge"]]
+    [IButton, "Zplugin:HI Layer Util:Visible OFF",,[Note, "hogehoge"]]
+]
+
+[RoutineCall, HiLayerUtil]
