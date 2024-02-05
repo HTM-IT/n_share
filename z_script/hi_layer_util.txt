@@ -50,7 +50,9 @@
 
 [VarSet, currentLayerName, [IGetTitle,"Tool:Layers:Layer Intensity"]]
 [IButton,Hogehoge,,
-    [Note,[IModGet, [StrMerge, Tool:Layers:, currentLayerName]]]
+    // [Note,[IModGet, [StrMerge, Tool:Layers:, currentLayerName]]]
+    [VarSet,wid,[IWidth,[StrMerge, Tool:Layers:, currentLayerName]]]
+    [IClick,[StrMerge, Tool:Layers:, currentLayerName], wid-28,5]
     //[Note, currentLayerName]
     //[IModSet, [StrMerge, Tool:Layers:, currentLayerName], 0]
     //[VarSet, layerPath, [StrMerge, Tool:Layers:, currentLayerName]]
