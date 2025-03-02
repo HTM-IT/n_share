@@ -21,6 +21,22 @@ python_version = sys.version_info.major
 win_title = 'HTM Vertex Color Tools'
 
 
+class QHLine(QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QFrame.HLine)
+        self.setFrameShadow(QFrame.Sunken)
+
+
+class ColoredQPushButton(QPushButton):
+    def __init__(self, text, color='002222', *args, **kwargs):
+        super(ColoredQPushButton, self).__init__(text, *args, **kwargs)
+        self.setStyleSheet(
+            f'QPushButton{{background-color:#{color};\
+                           color:black}}'
+        )
+
+
 class HTM_VertexColorTools(MayaQWidgetBaseMixin, QMainWindow):
     def __init__(self, parent=None, *args, **kwargs):
         # すでにあったら閉じる
@@ -93,7 +109,25 @@ class HTM_VertexColorTools(MayaQWidgetBaseMixin, QMainWindow):
         pb_set_rand.clicked.connect(self.set_random_color_from_uv)
         main_layout.addWidget(pb_set_grad)
         main_layout.addWidget(pb_set_rand)
+        main_layout.addWidget(QHLine()) # separalater
 
+        # 表示切替
+        gl_display_color = QGridLayout()
+        pb_r = ColoredQPushButton('R Channel', color= 'D13D3C')
+        pb_g = ColoredQPushButton('G Channel', color='22bb22')
+        pb_b = ColoredQPushButton('B Channel', color='3564DF')
+        pb_all = QPushButton('All Channels')
+        pb_r.clicked.connect(lambda:self.change_display_channel('r'))
+        pb_g.clicked.connect(lambda:self.change_display_channel('g'))
+        pb_b.clicked.connect(lambda:self.change_display_channel('b'))
+        pb_all.clicked.connect(lambda:self.change_display_channel('rgb'))
+
+        gl_display_color.addWidget(pb_r, 0, 0)
+        gl_display_color.addWidget(pb_g, 0, 1)
+        gl_display_color.addWidget(pb_b, 0, 2)
+        gl_display_color.addWidget(pb_all, 1, 0, 1, 3)
+
+        main_layout.addLayout(gl_display_color)
         widget.setLayout(main_layout)
         self.setCentralWidget(widget)
 
@@ -214,7 +248,33 @@ class HTM_VertexColorTools(MayaQWidgetBaseMixin, QMainWindow):
         g.HTM_SetFaceVertexColors_vertex = vertices
         mc.HTM_SetFaceVertexColors(obj)
 
+    def change_display_channel(self, channel='rgb'):
+        """ 特定チャンネルのみ表示
+        """
+        version = int(mc.about(version=True))
 
+        if version >= 2022: # 2022以降しか使えないはず
+            sel = mc.listRelatives(shapes=True, ni=True)
+
+            if sel is not None:
+                for s in sel:
+                    if channel == 'r':
+                        mc.setAttr(f'{s}.displayRedColorChannel', True)
+                        mc.setAttr(f'{s}.displayGreenColorChannel', False)
+                        mc.setAttr(f'{s}.displayBlueColorChannel', False)
+                    elif channel == 'g':
+                        mc.setAttr(f'{s}.displayRedColorChannel', False)
+                        mc.setAttr(f'{s}.displayGreenColorChannel', True)
+                        mc.setAttr(f'{s}.displayBlueColorChannel', False)
+                    elif channel == 'b':
+                        mc.setAttr(f'{s}.displayRedColorChannel', False)
+                        mc.setAttr(f'{s}.displayGreenColorChannel', False)
+                        mc.setAttr(f'{s}.displayBlueColorChannel', True)
+                    elif channel == 'rgb':
+                        # 全表示
+                        mc.setAttr(f'{s}.displayRedColorChannel', True)
+                        mc.setAttr(f'{s}.displayGreenColorChannel', True)
+                        mc.setAttr(f'{s}.displayBlueColorChannel', True)
 
 def main():
     ex = HTM_VertexColorTools()
