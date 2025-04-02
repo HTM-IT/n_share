@@ -2,9 +2,110 @@ import maya.cmds as mc
 import maya.api.OpenMaya as om2
 from re import findall
 
+
 class ConnectBorder:
-    @classmethod
-    def get_averaged_normal(cls, src, dst, mode='average'):
+    @staticmethod
+    def get_new_normal(src, dst):
+        """ 頂点法線は、頂点と接続のあるフェースのノーマル * 頂点角度 * フェース面積
+            の総和を正規化したものになる
+        """
+
+        # ヘルパー関数群
+        def get_normal_area(obj, face_id):
+            sel = om2.MSelectionList().add(obj)
+            dag, _ = sel.getComponent(0)
+
+            fn_mesh = om2.MFnMesh(dag)
+            it_poly = om2.MItMeshPolygon(dag)
+
+            normal = fn_mesh.getPolygonNormal(face_id, om2.MSpace.kWorld)
+            it_poly.setIndex(face_id)
+            area = it_poly.getArea()
+            edges = it_poly.getEdges()
+
+            return normal, area, edges
+
+
+        def get_vtx_edge(obj, vtx_id):
+            sel = om2.MSelectionList().add(obj)
+            dag, _ = sel.getComponent(0)
+
+            it_vtx = om2.MItMeshVertex(dag)
+            it_vtx.setIndex(vtx_id)
+
+            vtx_edge = it_vtx.getConnectedEdges()
+            return vtx_edge
+
+
+        def extract_face_id(face_name):
+            # フェースの文字列からフェースIDを抽出
+            face_id = face_name.split('f[')[-1][0:-1]
+            return int(face_id)
+
+
+        def extract_vtx_id(face_name):
+            # 頂点の文字列から頂点IDを抽出
+            vtx_id = face_name.split('vtx[')[-1][0:-1]
+            return int(vtx_id)
+
+
+        # 頂点選択（ペア）で実行
+        #sel = mc.ls(sl=True, fl=True)
+        sel = [src, dst]
+
+        all_normals = []
+        all_area = []
+        all_angle_rad = []
+        for s in sel:
+            # エッジを構成する頂点を取得するようのMFｎMesh
+            slist = om2.MSelectionList().add(s)
+            dag, _ = slist.getComponent(0)
+            fn_mesh = om2.MFnMesh(dag)
+
+            # フェース面積計算用に、頂点と接続のあるフェースを取得
+            faces = mc.ls(mc.polyListComponentConversion(s, tf=True), fl=True)
+
+            # 頂点と接続のあるエッジの取得
+            vtx_id = extract_vtx_id(s)
+            vtx_edges = get_vtx_edge(s, vtx_id)
+
+            for f in faces:
+                # フェースノーマル、面積、構成するエッジの取得
+                face_id = extract_face_id(f)
+                normal_tmp, area_tmp, face_edges = get_normal_area(s, face_id)
+
+                # 頂点と接続のある全エッジから、特定フェースを構成するエッジのみ抽出
+                edges = set(face_edges) & set(vtx_edges)
+
+                edge_vec = []
+                for e in edges:
+                    vtxs = fn_mesh.getEdgeVertices(e)
+                    p1 = om2.MVector(fn_mesh.getPoint(vtxs[0]))
+                    p2 = om2.MVector(fn_mesh.getPoint(vtxs[1]))
+
+                    # 現在の頂点を基準に方向を取得
+                    if vtx_id == vtxs[0]:
+                        edge_vec.append((p2 - p1))
+                    else:
+                        edge_vec.append((p1 - p2))
+
+                all_angle_rad.append(edge_vec[0].angle(edge_vec[1]))
+                all_normals.append(normal_tmp)
+                all_area.append(area_tmp)
+
+        # 法線計算
+        normal_sum = om2.MVector(0, 0, 0)
+        for n, a, ar in zip(all_normals, all_area, all_angle_rad):
+            normal_sum += n * a * ar
+
+        new_normal = normal_sum.normal()
+        #mc.polyNormalPerVertex(sel[0], xyz=list(new_normal))
+        #mc.polyNormalPerVertex(sel[1], xyz=list(new_normal))
+        return new_normal
+
+
+    @staticmethod
+    def get_averaged_normal(src, dst, mode='average'):
         """ Average normal
 
         Param:
@@ -48,8 +149,9 @@ class ConnectBorder:
 
         return new_nrm_s, new_nrm_d
 
-    @classmethod
-    def get_closest_border_vertex(cls, threshold=0.5):
+
+    @staticmethod
+    def get_closest_border_vertex(threshold=0.5):
         ''' Get closest border vertex normal, name, position
             1st object selected --> for editing
             2nd object selected --> for src
@@ -119,6 +221,7 @@ class ConnectBorder:
 
         return vtx_name_dst, vtx_name_src
 
+
     @classmethod
     def connect_border(cls, threshold, connect=False, pos=True, normal=True, weight=False):
         """
@@ -146,9 +249,10 @@ class ConnectBorder:
 
                 # Normal
                 if normal:
-                    new_nrm_s, new_nrm_d = cls.get_averaged_normal(src, dst, mode='average')
-                    mc.polyNormalPerVertex(src, xyz=list(new_nrm_s))
-                    mc.polyNormalPerVertex(dst, xyz=list(new_nrm_d))
+                    #new_nrm_s, new_nrm_d = cls.get_averaged_normal(src, dst, mode='average')
+                    new_normal = cls.get_new_normal(src, dst)
+                    mc.polyNormalPerVertex(src, xyz=list(new_normal))
+                    mc.polyNormalPerVertex(dst, xyz=list(new_normal))
 
                 # Weight
                 if weight:
