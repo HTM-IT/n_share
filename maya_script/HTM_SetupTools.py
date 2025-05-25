@@ -91,6 +91,27 @@ class HTM_SetupTools(MayaQWidgetBaseMixin, QMainWindow):
         main_layout.setSpacing(4)
 
         # ----------------------------------------------
+        # ジョイントの軸表示関連
+        gb_jla = QGroupBox(u'ジョイントのローカル軸表示')
+
+        pb_jla_all = QPushButton(u'全て')
+        pb_jla_sel = QPushButton(u'選択')
+        pb_jla_hie = QPushButton(u'階層')
+        pb_jla_all.clicked.connect(lambda _:HTM_SetupMiscFuncSet.display_joint_axis('all'))
+        pb_jla_sel.clicked.connect(lambda _:HTM_SetupMiscFuncSet.display_joint_axis('selection'))
+        pb_jla_hie.clicked.connect(lambda _:HTM_SetupMiscFuncSet.display_joint_axis('hierarchy'))
+
+        gl_jla = QGridLayout()
+        gl_jla.setContentsMargins(2, 2, 2, 2)
+        gl_jla.setSpacing(4)
+        gl_jla.addWidget(pb_jla_all, 0, 0, 1, 2)
+        gl_jla.addWidget(pb_jla_sel, 1, 0)
+        gl_jla.addWidget(pb_jla_hie, 1, 1)
+
+        gb_jla.setLayout(gl_jla)
+        main_layout.addWidget(gb_jla)
+
+        # ----------------------------------------------
         # フリーズジョイント系
         gb_fj = QGroupBox(u'ジョイントのフリーズ')
         vbl_fj = QVBoxLayout()
@@ -180,6 +201,7 @@ class HTM_SetupTools(MayaQWidgetBaseMixin, QMainWindow):
         self.chb_inverse = QCheckBox(u'反転')
         pb_jo = QPushButton(u'ジョイントの方向づけ')
         pb_jo.clicked.connect(self.joint_orient_clbk)
+        pb_jo.setFixedHeight(30)
 
         gl_jo = QGridLayout()
         gl_jo.setContentsMargins(2, 2, 2, 2)
@@ -250,6 +272,41 @@ class HTM_SetupTools(MayaQWidgetBaseMixin, QMainWindow):
                                    sec_axis=sec_axis, sec_target=sec_target)
         #self.orient_func.joint_orient(bend_direction, prm_axis=prm_axis,
         #                           sec_axis=sec_axis, sec_target=sec_target)
+
+
+class HTM_SetupMiscFuncSet:
+    @classmethod
+    @undo_ctx
+    def display_joint_axis(cls, target='all'):
+        """
+        """
+        assert target in ['hierarchy', 'selection', 'all'], 'invalid argument was passed.'
+
+        joints = []
+        if target == 'all':
+            joints = mc.ls(type='joint')
+
+        elif target == 'selection':
+            joints = mc.ls(sl=True, type='joint', l=True)
+
+        elif target == 'hierarchy':
+            joints = mc.ls(sl=True, type='joint', l=True)
+            if joints:
+                joints += mc.listRelatives(joints, ad=True, type='joint', f=True)
+                joints = set(joints)
+
+        if not joints:
+            om2.MGlobal.displayError('Pleaes select joint to show axis.')
+
+        # Show flag switch
+        axis_flag = [mc.getAttr(j + '.displayLocalAxis') for j in joints]
+        if any(axis_flag):
+            show = False
+        else:
+            show = True
+
+        for joint in joints:
+            mc.setAttr('%s.displayLocalAxis' % joint, show)
 
 
 class HTM_FreezeJoint:
