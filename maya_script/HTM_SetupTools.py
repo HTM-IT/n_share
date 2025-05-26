@@ -14,7 +14,7 @@ import maya.cmds as mc
 import maya.api.OpenMaya as om2
 import maya.api.OpenMayaAnim as oma2
 import maya.OpenMaya as om
-import maya.OpenMayaAnim as oma
+import maya.OpenMayaAnim as omaz
 
 from maya.OpenMayaUI import MQtUtil
 from maya import OpenMayaUI as omui
@@ -133,10 +133,14 @@ class HTM_SetupTools(MayaQWidgetBaseMixin, QMainWindow):
 
         # ボタン
         pb_freeze_sel = QPushButton(u'選択をフリーズ')
+        pb_freeze_sel.setIcon(QIcon(':/UV_Freeze_ToolLarge.png'))
+        pb_freeze_sel.setIconSize(QSize(24,24))
         pb_freeze_sel.clicked.connect(lambda _:self.freeze_joint_clbk(hierarchy=False))
         pb_freeze_sel.setFixedHeight(30)
 
         pb_freeze_hie = QPushButton(u'階層をフリーズ')
+        pb_freeze_hie.setIcon(QIcon(':/UV_Freeze_ToolLarge.png'))
+        pb_freeze_hie.setIconSize(QSize(24,24))
         pb_freeze_hie.clicked.connect(lambda _:self.freeze_joint_clbk(hierarchy=True))
         pb_freeze_hie.setFixedHeight(30)
         pb_unfreezed_search = QPushButton(u'フリーズされてないジョイントを選択')
@@ -151,42 +155,67 @@ class HTM_SetupTools(MayaQWidgetBaseMixin, QMainWindow):
         main_layout.addWidget(gb_fj)
 
         # ----------------------------------------------
+        # スキンクラスター無効化
+        gb_sc = QGroupBox(u'スキンクラスター無効化')
+        vbl_sc = QVBoxLayout()
+        vbl_sc.setContentsMargins(2, 2, 2, 2)
+        vbl_sc.setSpacing(4)
+
+        pb_sc = QPushButton(u'スキンクラスター無効化/有効化')
+        pb_sc.clicked.connect(HTM_ReinitializeSkinnedJoint.sc_envelope_toggle)
+        vbl_sc.addWidget(pb_sc)
+
+        gb_sc.setLayout(vbl_sc)
+        main_layout.addWidget(gb_sc)
+
+        # ----------------------------------------------
         # バインドポーズ関連
         gb_bp = QGroupBox(u'バインドポーズ')
         vbl_bp = QVBoxLayout()
         vbl_bp.setContentsMargins(2, 2, 2, 2)
         vbl_bp.setSpacing(4)
 
+        pb_gtbp = QPushButton(u'バインドポーズに戻す')
+        pb_gtbp.setIcon(QIcon(':/goToBindPose.png'))
+        pb_gtbp.setIconSize(QSize(24,24))
+        pb_gtbp.clicked.connect(lambda _:eval('gotoBindPose;'))
+        pb_gtbp.setFixedHeight(30)
+        vbl_bp.addWidget(pb_gtbp)
+
         pb_bp = QPushButton(u'ジョイントの再初期化')
+        pb_bp.setIcon(QIcon(':/kinJoint.png'))
+        pb_bp.setIconSize(QSize(24,24))
         pb_bp.clicked.connect(HTM_ReinitializeSkinnedJoint.reinitialize)
         pb_bp.setFixedHeight(30)
         vbl_bp.addWidget(pb_bp)
 
         pb_rbp = QPushButton(u'バインドポーズを1つにする\n(現在のジョイントの状態をバインドポーズに)')
         pb_rbp.clicked.connect(HTM_RecreateBindPose.recreate_bind_pose)
-        pb_rbp.setFixedHeight(40)
+        pb_rbp.setFixedHeight(30)
         vbl_bp.addWidget(pb_rbp)
 
         gb_bp.setLayout(vbl_bp)
         main_layout.addWidget(gb_bp)
 
         # ----------------------------------------------
-        # バインドポーズ関連
+        # ヒストリ整理関連
         gb_dh = QGroupBox(u'ヒストリ整理')
         vbl_dh = QVBoxLayout()
         vbl_dh.setContentsMargins(2, 2, 2, 2)
         vbl_dh.setSpacing(4)
 
         pb_rbp = QPushButton(u'ヒストリの削除\n(バインド情報は残す)')
+        pb_rbp.setIcon(QIcon(':/constructionHistory.png'))
+        pb_rbp.setIconSize(QSize(24,24))
         pb_rbp.clicked.connect(HTM_DeleteHistoryWithoutSC.del_history_without_sc)
-        pb_rbp.setFixedHeight(40)
+        pb_rbp.setFixedHeight(30)
         vbl_dh.addWidget(pb_rbp)
 
         gb_dh.setLayout(vbl_dh)
         main_layout.addWidget(gb_dh)
 
         # ----------------------------------------------
-        # バインドポーズ関連
+        # ジョイントの方向づけ関連
         gb_jo = QGroupBox(u'ジョイントの方向づけ')
 
         # コンボボックスオブジェクトの生成
@@ -200,6 +229,8 @@ class HTM_SetupTools(MayaQWidgetBaseMixin, QMainWindow):
         self.cb_jo_w.setCurrentIndex(1)
         self.chb_inverse = QCheckBox(u'反転')
         pb_jo = QPushButton(u'ジョイントの方向づけ')
+        pb_jo.setIcon(QIcon(':/orientJoint.png'))
+        pb_jo.setIconSize(QSize(24,24))
         pb_jo.clicked.connect(self.joint_orient_clbk)
         pb_jo.setFixedHeight(30)
 
@@ -438,9 +469,13 @@ class HTM_ReinitializeSkinnedJoint:
                 # Set all SC envelope at 1, if even one SC whose envelope is 0 was found.
                 for sc2 in sc_list:
                     mc.setAttr(sc2 + '.envelope', 1)
+                    message = u'スキンクラスターを有効化しました'
+                    mc.inViewMessage(smg = message, pos = 'topCenter', bkc = 0x000000ff, fade=1, textAlpha = 1.0)
                 return
             else:
                 mc.setAttr(sc + '.envelope', 0)
+                message = u'スキンクラスターを無効化しました'
+                mc.inViewMessage(smg = message, pos = 'topCenter', bkc = 0x00ff0000, fade=1, textAlpha = 1.0)
 
 
 class HTM_RecreateBindPose:
