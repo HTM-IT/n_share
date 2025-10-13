@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 from collections import defaultdict, OrderedDict
 import maya.api.OpenMaya as om2
