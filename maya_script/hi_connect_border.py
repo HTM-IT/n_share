@@ -6,8 +6,13 @@ from re import findall
 class ConnectBorder:
     @staticmethod
     def get_new_normal(src, dst):
-        """ 頂点法線は、頂点と接続のあるフェースのノーマル * 頂点角度 * フェース面積
-            の総和を正規化したものになる
+        """
+        頂点法線は、頂点と接続のあるフェースのノーマル * 頂点角度 * フェース面積
+        の総和を正規化したものになる
+
+        Args:
+            src:
+            dst:
         """
 
         # ヘルパー関数群
@@ -105,10 +110,48 @@ class ConnectBorder:
 
 
     @staticmethod
-    def get_averaged_normal(src, dst, mode='average'):
-        """ Average normal
+    def transfer_skin_weights(src_vtx, dst_vtx):
+        """
+        スキンウェイトをある頂点から別の頂点に転送する
 
-        Param:
+        Args:
+            src_vtx(str): source vtx, "xxx.vtx[x]"
+            dst_vtx(str): destination vtx, "xxx.vtx[x]"
+        """
+        # 転送元頂点のスキンクラスターを取得
+        src_mesh = src_vtx.split('.')[0]
+        src_history = mc.listHistory(src_mesh, pruneDagObjects=True)
+        src_skin_cluster = mc.ls(src_history, type='skinCluster')[0]
+
+        # 転送先頂点のスキンクラスターを取得
+        dst_mesh = dst_vtx.split('.')[0]
+        dst_history = mc.listHistory(dst_mesh, pruneDagObjects=True)
+        dst_skin_cluster = mc.ls(dst_history, type='skinCluster')[0]
+
+        if not src_skin_cluster:
+            om2.MGlobal.displayError(f'スキンクラスターが見つかりませんでした（転送元: {src_vtx}）')
+            return
+
+        if not dst_skin_cluster:
+            om2.MGlobal.displayError(f'スキンクラスターが見つかりませんでした（転送先: {dst_vtx}）')
+            return
+
+        # 元の頂点のスキンウェイトを取得
+        src_joints = mc.skinCluster(src_skin_cluster, query=True, influence=True)
+        src_weights = mc.skinPercent(src_skin_cluster, src_vtx, query=True, value=True)
+
+        # 転送先の頂点にスキンウェイトを適用
+        for joint, weight in zip(src_joints, src_weights):
+            mc.skinPercent(dst_skin_cluster, dst_vtx, transformValue=[(joint, weight)])
+
+
+
+    @staticmethod
+    def get_averaged_normal(src, dst, mode='average'):
+        """
+        Average normal
+
+        Args:
             src(str): source vertex, "xxx.vtx[x]"
             dst(str): destination vertex, "xxx.vtx[x]"
         """
@@ -256,7 +299,7 @@ class ConnectBorder:
 
                 # Weight
                 if weight:
-                   pass
+                    cls.transfer_skin_weights(src, dst)
 
         mc.selectType(ocm=True, vertex=True)
         mc.select(cl=True)
@@ -264,4 +307,6 @@ class ConnectBorder:
         mc.hilite(obj)
 
 
-ConnectBorder.connect_border(1.0, connect=True)
+if '__main__' == __name__:
+    ConnectBorder.connect_border(1.0, connect=True, weight=True)
+
