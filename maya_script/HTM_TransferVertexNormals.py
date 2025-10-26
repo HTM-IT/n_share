@@ -12,8 +12,8 @@ def maya_useNewAPI():
     pass
 
 
-class HTM_TransferNormals(om2.MPxCommand):
-    kPluginCmdName = 'HTM_TransferNormals'
+class HTM_TransferVertexNormals(om2.MPxCommand):
+    kPluginCmdName = 'HTM_TransferVertexNormals'
 
     def __init__(self):
         om2.MPxCommand.__init__(self)
@@ -21,7 +21,7 @@ class HTM_TransferNormals(om2.MPxCommand):
 
     @staticmethod
     def cmdCreator():
-        return HTM_TransferNormals()
+        return HTM_TransferVertexNormals()
 
     def doIt(self, args):
         self.parseArguments(args)
@@ -128,7 +128,7 @@ class HTM_TransferNormals(om2.MPxCommand):
             fn_mesh_dst.setVertexNormals(normal_edit, range(num_vtx), om2.MSpace.kWorld)
 
             end = time()
-            print(f'# HTM_TransferNormals : {end - sta:.3f} sec')
+            print(f'# HTM_TransferVertexNormals : {end - sta:.3f} sec')
 
     def undoIt(self):
         it_sel = om2.MItSelectionList(self.sel)
@@ -174,11 +174,11 @@ class HTM_TransferNormals(om2.MPxCommand):
 
 def initializePlugin(mobject):
     plugin = om2.MFnPlugin(mobject)
-    plugin.registerCommand(HTM_TransferNormals.kPluginCmdName,
-                           HTM_TransferNormals.cmdCreator,
-                           HTM_TransferNormals.syntaxCreator)
+    plugin.registerCommand(HTM_TransferVertexNormals.kPluginCmdName,
+                           HTM_TransferVertexNormals.cmdCreator,
+                           HTM_TransferVertexNormals.syntaxCreator)
 
 
 def uninitializePlugin(mobject):
     pluginFn = om2.MFnPlugin(mobject)
-    pluginFn.deregisterCommand(HTM_TransferNormals.kPluginCmdName)
+    pluginFn.deregisterCommand(HTM_TransferVertexNormals.kPluginCmdName)
