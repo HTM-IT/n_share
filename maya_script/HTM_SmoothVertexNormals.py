@@ -81,8 +81,7 @@ class HTM_SmoothVertexNormals(om2.MPxCommand):
     def isUndoable(self):
         return True
 
-    def parseArgument(self, args):
-        # ParseArgument       
+    def parseArgument(self, args):     
         arg_data = om2.MArgDatabase(self.syntax(), args)
         self.sel = arg_data.getObjectList() # MSelectionListとして取得
 
