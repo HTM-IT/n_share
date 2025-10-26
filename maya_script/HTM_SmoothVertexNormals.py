@@ -24,14 +24,14 @@ class HTM_SmoothVertexNormals(om2.MPxCommand):
 
         # ------------------------------------------------------------
         # Undo用情報取得
-        normals = self.fn_mesh.getNormals()
+        normals = self.fn_mesh.getNormals(om2.MSpace.kWorld)
         lock_state = []
         for i in range(len(normals)):
             state = self.fn_mesh.isNormalLocked(i)
             lock_state.append(state)
 
         it_face_vtx = om2.MItMeshFaceVertex(dag)
-        self.new_normals = []
+        self.new_normals = om2.MVectorArray()
         self.lock_faces = []
         self.lock_vtxs = []
         for face_vtx in it_face_vtx:
@@ -41,7 +41,6 @@ class HTM_SmoothVertexNormals(om2.MPxCommand):
                 self.lock_faces.append(face_vtx.faceId())
                 self.lock_vtxs.append(face_vtx.vertexId())
                 self.new_normals.append(normals[nrm_id])
-        self.new_normals = [om2.MVector(n) for n in self.new_normals]
 
         # ソフトエッジ・ハードエッジの情報
         self.edge_smoothing = [self.fn_mesh.isEdgeSmooth(id) for id in range(self.fn_mesh.numEdges)]
@@ -74,7 +73,7 @@ class HTM_SmoothVertexNormals(om2.MPxCommand):
 
     def undoIt(self):
         self.fn_mesh.unlockVertexNormals(range(self.fn_mesh.numVertices))
-        self.fn_mesh.setFaceVertexNormals(self.new_normals, self.lock_faces, self.lock_vtxs)
+        self.fn_mesh.setFaceVertexNormals(self.new_normals, self.lock_faces, self.lock_vtxs, om2.MSpace.kWorld)
         self.fn_mesh.setEdgeSmoothings(self.edge_ids, self.edge_smoothing)
         self.fn_mesh.updateSurface()
 
