@@ -3,6 +3,27 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 import time
 
+def change_edge_display():
+    """" エッジの表示モード変更 """"
+    sel = cmds.ls(sl=True, l=True, tr=True)
+    disp_type = []
+    for s in sel:
+        disp_type.append(cmds.getAttr(s + '.displayEdges'))
+        
+    if disp_type.count(disp_type[0]) == len(disp_type):
+        # リストの最初の要素の出現回数がそのリストの長さと同じなら全要素が同じ
+        type = disp_type[0]
+        type = (type + 1) % 4
+        for s in sel:
+            cmds.setAttr(s + '.displayEdges', type)
+    else:
+        for s in sel:
+            cmds.setAttr(s + '.displayEdges', 0)
+
+if __name__ == '__main__':
+    change_edge_display()
+
+
 def smooth_vertex_normals():
     start = time.time()
     sel = om2.MGlobal.getActiveSelectionList()
