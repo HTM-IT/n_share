@@ -70,7 +70,7 @@ class HTM_TransferVertexNormals(om2.MPxCommand):
                     lock_state.append(state)
 
                 it_face_vtx = om2.MItMeshFaceVertex(dag)
-                new_normals = om2.MVectorArray()
+                normal_orig = om2.MVectorArray()
                 faces_locked = []
                 vtxs_locked = []
                 for face_vtx in it_face_vtx:
@@ -79,24 +79,31 @@ class HTM_TransferVertexNormals(om2.MPxCommand):
                         # 法線がロックされている頂点フェースとその法線を取得
                         faces_locked.append(face_vtx.faceId())
                         vtxs_locked.append(face_vtx.vertexId())
-                        new_normals.append(normals[nrm_id])
+                        normal_orig.append(normals[nrm_id])
 
                 # ソフトエッジ・ハードエッジの情報
                 edge_smoothing = [fn_mesh_dst.isEdgeSmooth(id) for id in range(fn_mesh_dst.numEdges)]
                 edge_ids = [id for id in range(fn_mesh_dst.numEdges)]
 
-                self.orig_info.append({'normals':new_normals, 'faces_locked':faces_locked, 'vtxs_locked':vtxs_locked,
+                self.orig_info.append({'normals':normal_orig, 'faces_locked':faces_locked, 'vtxs_locked':vtxs_locked,
                                        'edge_ids':edge_ids, 'edge_smoothing':edge_smoothing})
 
                 # ------------------------------------------------------------
                 # 転送処理
                 normal_edit = fn_mesh_dst.getVertexNormals(False, om2.MSpace.kWorld) # 編集用法線
+                new_normals = om2.MVectorArray()
+                new_vtxs = []
 
                 # コンポーネント選択かどうかで処理を分岐させる
                 if sel.hasComponents():
                     dst_fn_comp = om2.MFnSingleIndexedComponent(comp)
+                    it_vtx = om2.MItMeshVertex(dag, comp)
+                    sel_comp = [vtx.index() for vtx in it_vtx]
 
                     for j, vtx_id in enumerate(dst_fn_comp.getElements()):
+                        if vtx_id not in sel_comp:
+                            continue
+
                         if soft_sel_state == 1:
                             if self.base_weight == 1.0:
                                 # ベースのウェイトが1.0ならself.base_weightをかける処理は省略できる
@@ -107,10 +114,11 @@ class HTM_TransferVertexNormals(om2.MPxCommand):
                             # ソフト選択がOFFなら各コンポーネントのウェイトを考えなくていい
                             weight = self.base_weight
 
-
                         pos = fn_mesh_dst.getPoint(vtx_id, om2.MSpace.kWorld)
-                        normal_edit[vtx_id] = normal_edit[vtx_id] * (1.0 - weight) + weight *\
-                                              om2.MFloatVector(fn_mesh_src.getClosestNormal(pos, om2.MSpace.kWorld)[0])
+                        temp = normal_edit[vtx_id] * (1.0 - weight) + weight *\
+                               om2.MFloatVector(fn_mesh_src.getClosestNormal(pos, om2.MSpace.kWorld)[0])
+                        new_normals.append(temp)
+                        new_vtxs.append(vtx_id)
 
                 else:
                     # オブジェクト選択の場合
@@ -118,14 +126,18 @@ class HTM_TransferVertexNormals(om2.MPxCommand):
 
                     if self.base_weight == 1.0:
                         for j, pos in enumerate(points):
-                            normal_edit[j] = fn_mesh_src.getClosestNormal(pos, om2.MSpace.kWorld)[0]
+                            temp = fn_mesh_src.getClosestNormal(pos, om2.MSpace.kWorld)[0]
+                            new_normals.append(temp)
+                            new_vtxs.append(j)
                     else:
                         for j, pos in enumerate(points):
-                            normal_edit[j] = normal_edit[j] * (1.0 - self.base_weight) + self.base_weight * \
-                                             om2.MFloatVector(fn_mesh_src.getClosestNormal(pos, om2.MSpace.kWorld)[0])
+                            temp = normal_edit[j] * (1.0 - self.base_weight) + self.base_weight * \
+                                   om2.MFloatVector(fn_mesh_src.getClosestNormal(pos, om2.MSpace.kWorld)[0])
+                            new_normals.append(temp)
+                            new_vtxs.append(j)
                             
             # 法線転送
-            fn_mesh_dst.setVertexNormals(normal_edit, range(num_vtx), om2.MSpace.kWorld)
+            fn_mesh_dst.setVertexNormals(new_normals, new_vtxs, om2.MSpace.kWorld)
 
             end = time()
             print(f'# HTM_TransferVertexNormals : {end - sta:.3f} sec')
