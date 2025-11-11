@@ -5,7 +5,7 @@ import time
 import math
 
 
-def calc_tex_size(ppm=128):
+def calc_tex_size(ppcm=128):
     sel = om2.MGlobal.getActiveSelectionList()
     dag, comp = sel.getComponent(0)
     fn_mesh = om2.MFnMesh(dag)
@@ -17,15 +17,15 @@ def calc_tex_size(ppm=128):
         face_area += poly.getArea()
         uv_area += poly.getUVArea()
     
-    tex_size = ppm * math.sqrt(face_area / uv_area)
+    tex_size = ppcm * math.sqrt(face_area / uv_area)
     
     print('# Face Area : {}'.format(face_area))
     print('# UV Area : {}'.format(uv_area))
     print('# Texture Size : {}'.format(tex_size))
     
 if __name__ == '__main__':
-    ppm = 28.3148
-    calc_tex_size(ppm=ppm)
+    ppcm = 512 # ppcm:pixel per centimeter
+    calc_tex_size(ppcm=ppcm)
 
 
 def change_edge_display():
