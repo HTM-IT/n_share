@@ -1,10 +1,35 @@
 # -*- coding: utf-8 -*-
-import maya.cmds as cmds
+from maya import cmds
 import maya.api.OpenMaya as om2
 import time
+import math
+
+
+def calc_tex_size(ppm=128):
+    sel = om2.MGlobal.getActiveSelectionList()
+    dag, comp = sel.getComponent(0)
+    fn_mesh = om2.MFnMesh(dag)
+    it_poly = om2.MItMeshPolygon(dag)
+    
+    face_area = 0
+    uv_area = 0
+    for poly in it_poly:
+        face_area += poly.getArea()
+        uv_area += poly.getUVArea()
+    
+    tex_size = ppm * math.sqrt(face_area / uv_area)
+    
+    print('# Face Area : {}'.format(face_area))
+    print('# UV Area : {}'.format(uv_area))
+    print('# Texture Size : {}'.format(tex_size))
+    
+if __name__ == '__main__':
+    ppm = 28.3148
+    calc_tex_size(ppm=ppm)
+
 
 def change_edge_display():
-    """" エッジの表示モード変更 """"
+    """" エッジの表示モード変更 """
     sel = cmds.ls(sl=True, l=True, tr=True)
     disp_type = []
     for s in sel:
