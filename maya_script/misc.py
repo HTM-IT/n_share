@@ -5,6 +5,11 @@ import time
 import math
 
 
+def nearest_value(x):
+    size_preset = [16, 32, 64, 128, 256, 512, 768,
+                   1024, 1280, 1536, 1792, 2048]
+    return min(size_preset, key=lambda v: abs(v - x))
+
 def calc_tex_size(ppcm=128):
     sel = om2.MGlobal.getActiveSelectionList()
     dag, comp = sel.getComponent(0)
@@ -18,13 +23,15 @@ def calc_tex_size(ppcm=128):
         uv_area += poly.getUVArea()
     
     tex_size = ppcm * math.sqrt(face_area / uv_area)
+    tex_size_rounded = nearest_value(tex_size) 
     
     print('# Face Area : {}'.format(face_area))
     print('# UV Area : {}'.format(uv_area))
     print('# Texture Size : {}'.format(tex_size))
+    print('# Texture Size Rounded : {}'.format(tex_size_rounded))
     
 if __name__ == '__main__':
-    ppcm = 512 # ppcm:pixel per centimeter
+    ppcm = 20 # ppcm:pixel per centimeter
     calc_tex_size(ppcm=ppcm)
 
 
