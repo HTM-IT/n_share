@@ -5,6 +5,30 @@ import time
 import math
 
 
+"""
+// custom shader code
+float3 tangent_vs = cross(Normal, float3(1, 0, 0));
+float3 binormal_vs = cross(tangent_vs, Normal);
+
+float x_ts = dot(Half, tangent_vs);
+float y_ts = dot(Half, binormal_vs);
+float z_ts = dot(Half, Normal);
+
+float theta = atan2(x_ts, y_ts);
+float sqrnorm = pow(abs(sin(2.0 * theta)), n);
+
+float x_edit = (1-sigma *  sqrnorm) * x_ts;
+float y_edit = (1-sigma * sqrnorm) * y_ts;
+
+float3 half_edit = float3(x_edit, y_edit, z_ts);
+half_edit = normalize(half_edit);
+
+float3 half_view = float3(half_edit.x * tangent_vs + half_edit.y * binormal_vs + half_edit.z * Normal);
+
+return half_view;
+"""
+
+
 def nearest_value(x):
     size_preset = [16, 32, 64, 128, 256, 512, 768,
                    1024, 1280, 1536, 1792, 2048]
